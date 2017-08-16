@@ -1,4 +1,4 @@
-- `glide init`
+- `install package`
 !-- mux
 !-- handlers
 !-- context
@@ -7,7 +7,6 @@
 !-- mattes/migrate
 
 - Application Structure
-!-- app.go
 !-- main.go
 !-- main_test.go
 !-- model.go
