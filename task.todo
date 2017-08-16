@@ -1,6 +1,21 @@
 - `glide init`
--- mux
--- handlers
--- context
--- jwt-go
--- mysql
+!-- mux
+!-- handlers
+!-- context
+!-- jwt-go
+!-- mysql
+!-- mattes/migrate
+
+- Application Structure
+!-- app.go
+!-- main.go
+!-- main_test.go
+!-- model.go
+
+- User
+!-- model
+!-- controller
+- Issue
+!-- model
+!-- controller
+
