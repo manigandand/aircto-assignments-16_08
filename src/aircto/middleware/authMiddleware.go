@@ -30,13 +30,13 @@ func JwtMiddleware(next http.Handler) http.Handler {
 
 		fmt.Println(token)
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			fmt.Println(claims["id"], claims["email"], claims["user_name"], claims["first_name"], claims["last_name"], claims["exp"])
+			fmt.Println(claims["id"], claims["email"], claims["userName"], claims["firstName"], claims["lastName"], claims["exp"])
 
 			context.Set(r, "userID", claims["id"])
 			context.Set(r, "userEmail", claims["email"])
-			context.Set(r, "userName", claims["user_name"])
-			context.Set(r, "userFirstName", claims["first_name"])
-			context.Set(r, "userLastName", claims["last_name"])
+			context.Set(r, "userName", claims["userName"])
+			context.Set(r, "userFirstName", claims["firstName"])
+			context.Set(r, "userLastName", claims["lastName"])
 
 			next.ServeHTTP(w, r)
 		} else {

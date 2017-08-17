@@ -56,3 +56,14 @@ func LoadErrorResponse(statusCode int, err error) *Response {
 		statusCode,
 		TimeType{int32(time.Now().Unix())}}
 }
+
+func LoadValidationErrorResponse(data interface{}) *Response {
+	return &Response{
+		false,
+		"Validation error. Please check your inputs.",
+		false,
+		data,
+		ErrorType{true, "check data response for error details"},
+		400,
+		TimeType{int32(time.Now().Unix())}}
+}

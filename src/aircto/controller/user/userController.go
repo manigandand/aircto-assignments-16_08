@@ -53,19 +53,19 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result, _ := json.Marshal(responseHandler.LoadErrorResponse(401, err))
 		w.Write([]byte(result))
-	} else {
-		acstkn := getTokenHandler(dbResult)
-		data := struct {
-			AccessToken string  `json:"access_token"`
-			UserDetails DB.User `json:"user_details"`
-		}{acstkn, dbResult}
-
-		message = "You have successfully logged in."
-		response := responseHandler.ResponseWriter(message, true, data, 200)
-		result, _ := json.Marshal(response)
-
-		w.Write([]byte(result))
+		return
 	}
+	acstkn := getTokenHandler(dbResult)
+	data := struct {
+		AccessToken string  `json:"access_token"`
+		UserDetails DB.User `json:"user_details"`
+	}{acstkn, dbResult}
+
+	message = "You have successfully logged in."
+	response := responseHandler.ResponseWriter(message, true, data, 200)
+	result, _ := json.Marshal(response)
+
+	w.Write([]byte(result))
 }
 
 /**
@@ -103,15 +103,15 @@ func GetAllUserList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
 		w.Write([]byte(result))
-	} else {
-		data := struct {
-			UserDetails []*DB.User `json:"user_details"`
-		}{dbResult}
-
-		message = "All user list successfully retrieved"
-		response := responseHandler.ResponseWriter(message, true, data, 200)
-		result, _ := json.Marshal(response)
-
-		w.Write([]byte(result))
+		return
 	}
+	data := struct {
+		UserDetails []*DB.User `json:"user_details"`
+	}{dbResult}
+
+	message = "All user list successfully retrieved"
+	response := responseHandler.ResponseWriter(message, true, data, 200)
+	result, _ := json.Marshal(response)
+
+	w.Write([]byte(result))
 }

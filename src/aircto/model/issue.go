@@ -14,6 +14,14 @@ type Issue struct {
 	Status      string `json:"status"`
 }
 
+/* Validator struct */
+type IssueValidator struct {
+	Title       string `validate:"required"`
+	Description string `validate:"required"`
+	AssignedTo  int    `validate:"required"`
+	Status      string `validate:"required"`
+}
+
 func GetAllIssues() ([]*Issue, error) {
 	var issuesRes []*Issue
 
@@ -44,7 +52,7 @@ func GetIssue(issueID int) (Issue, error) {
 	return res1, nil
 }
 
-func CreateIssue(issueReqBody Issue, createdBy interface{}) (string, error) {
+func CreateIssue(issueReqBody IssueValidator, createdBy interface{}) (string, error) {
 	_, err := db.Exec("INSERT INTO issues(title, description, assigned_to, created_by, status) VALUES(?, ?, ?, ?, ?)", issueReqBody.Title, issueReqBody.Description, issueReqBody.AssignedTo, createdBy, issueReqBody.Status)
 	if err != nil {
 		fmt.Println(err)
