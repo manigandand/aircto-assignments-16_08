@@ -61,14 +61,70 @@ func CreateIssue(issueReqBody IssueValidator, createdBy interface{}) (string, er
 	return "New Issue successfully created", nil
 }
 
-// func (u *issue) updateIssue(db *sql.DB) error {
-// 	return errors.New("Not Implemented")
-// }
+func GetUpdaetIssueId(issueID int, createdBy interface{}) (int, error) {
+	var id int
+	err := db.QueryRow("SELECT id FROM issues WHERE id=? AND created_by=?", issueID, createdBy).Scan(&id)
+	if err != nil {
+		return id, errors.New("Unauthorized: You don't have access to update/edit this issue information or the issue id is wrong.")
+	}
+	return id, nil
+}
 
-// func (u *issue) deleteIssue(db *sql.DB) error {
-// 	return errors.New("Not Implemented")
-// }
+func UpdateIssue(issueReqBody IssueValidator, issueID int, createdBy interface{}) (string, error) {
+	_, err = db.Exec("UPDATE issues SET title=?, description=?, assigned_to=?, status=? WHERE id=? AND created_by=?", issueReqBody.Title, issueReqBody.Description, issueReqBody.AssignedTo, issueReqBody.Status, issueID, createdBy)
+	if err != nil {
+		fmt.Println(err)
+		return "", errors.New("You don't have access to update/edit this issue information or the issue id is wrong.")
+	}
+	return "Issue information successfully updated", nil
+}
 
-// func getIssues(db *sql.DB, start, count int) ([]issue, error) {
-// 	return nil, errors.New("Not Implemented")
-// }
+func DeleteIssue(issueID int, createdBy interface{}) (string, error) {
+	_, err = db.Exec("DELETE FROM issues WHERE id=? AND created_by=?", issueID, createdBy)
+	if err != nil {
+		return "", errors.New("You don't have access to delete this issue or the issue id is wrong.")
+	}
+	return "Issue successfully removed", nil
+}
+
+func GetIssuesCreatedByMe(createdBy interface{}) ([]*Issue, error) {
+	var issuesRes []*Issue
+
+	rows, err := db.Query("SELECT * FROM issues WHERE created_by=?", createdBy)
+	if err != nil {
+		return issuesRes, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		res1 := &Issue{}
+		err = rows.Scan(&res1.ID, &res1.Title, &res1.Description, &res1.AssignedTo, &res1.CreatedBy, &res1.Status)
+		if err != nil {
+			return issuesRes, err
+		}
+
+		issuesRes = append(issuesRes, res1)
+	}
+	return issuesRes, nil
+}
+
+func GetIssuesAssignedToMe(createdBy interface{}) ([]*Issue, error) {
+	var issuesRes []*Issue
+
+	rows, err := db.Query("SELECT * FROM issues WHERE assigned_to=?", createdBy)
+	if err != nil {
+		return issuesRes, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		res1 := &Issue{}
+		err = rows.Scan(&res1.ID, &res1.Title, &res1.Description, &res1.AssignedTo, &res1.CreatedBy, &res1.Status)
+		if err != nil {
+			return issuesRes, err
+		}
+
+		issuesRes = append(issuesRes, res1)
+	}
+	return issuesRes, nil
+}

@@ -2,19 +2,14 @@ package controller
 
 import (
 	"encoding/json"
-	// "errors"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
-	// "strings"
-	// "time"
 
 	DB "aircto/model"
 	responseHandler "aircto/response"
 
-	// "database/sql"
-	// "github.com/dgrijalva/jwt-go"
-	// _ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/validator.v9"
@@ -36,7 +31,7 @@ func init() {
  */
 var GetAllIssuesList = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println(context.Get(r, "user_id"))
+	fmt.Println(context.Get(r, "userID"))
 	// query
 	dbResult, err := DB.GetAllIssues()
 	if err != nil {
@@ -124,6 +119,144 @@ var CreateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	data := dbResult
 	message = dbResult
 	response := responseHandler.ResponseWriter(message, true, data, 201)
+	result, _ := json.Marshal(response)
+	w.Write([]byte(result))
+})
+
+/**
+* Update a issue
+ */
+var UpdateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	issueID, _ := strconv.Atoi(vars["issueID"])
+	issueReqBody := DB.IssueValidator{}
+
+	_ = json.NewDecoder(r.Body).Decode(&issueReqBody)
+	createdBy := context.Get(r, "userID")
+	// validate the inputs
+	issueValidateStruct := &DB.IssueValidator{
+		Title:       issueReqBody.Title,
+		Description: issueReqBody.Description,
+		AssignedTo:  issueReqBody.AssignedTo,
+		Status:      issueReqBody.Status,
+	}
+
+	validateErr := validate.Struct(issueValidateStruct)
+	if validateErr != nil {
+		var erors []string
+		for _, validateErr := range validateErr.(validator.ValidationErrors) {
+			errMsg := validateErr.Field() + " filed is " + validateErr.Tag()
+			erors = append(erors, errMsg)
+		}
+		errData := struct {
+			Errors []string `json:"errors"`
+		}{erors}
+
+		result, _ := json.Marshal(responseHandler.LoadValidationErrorResponse(errData))
+		w.Write([]byte(result))
+		return
+	}
+	// we can goahead to update this info, get issue info by id & createdBy
+	resIssueID, err := DB.GetUpdaetIssueId(issueID, createdBy)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+
+	dbResult, err := DB.UpdateIssue(issueReqBody, resIssueID, createdBy)
+	//update error
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+	// return success response
+	data := dbResult
+	message = dbResult
+	response := responseHandler.ResponseWriter(message, true, data, 201)
+	result, _ := json.Marshal(response)
+	w.Write([]byte(result))
+})
+
+/**
+* Delete issue
+ */
+var DeleteIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	issueID, _ := strconv.Atoi(vars["issueID"])
+	createdBy := context.Get(r, "userID")
+
+	// we can goahead to update this info, get issue info by id & createdBy
+	resIssueID, err := DB.GetUpdaetIssueId(issueID, createdBy)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, errors.New("You don't have access to delete this issue or the issue id is wrong.")))
+		w.Write([]byte(result))
+		return
+	}
+
+	// delete a issue
+	dbResult, err := DB.DeleteIssue(resIssueID, createdBy)
+	//delete error
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+	// return success response
+	data := dbResult
+	message = dbResult
+	response := responseHandler.ResponseWriter(message, true, data, 201)
+	result, _ := json.Marshal(response)
+	w.Write([]byte(result))
+})
+
+/**
+* get all the issues created by me
+ */
+var GetAllIssuesByMe = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	createdBy := context.Get(r, "userID")
+	dbResult, err := DB.GetIssuesCreatedByMe(createdBy)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+
+	data := struct {
+		AllIssues []*DB.Issue `json:"all_issues"`
+	}{dbResult}
+
+	message = "All issue list created by you successfully retrieved"
+	response := responseHandler.ResponseWriter(message, true, data, 200)
+	result, _ := json.Marshal(response)
+	w.Write([]byte(result))
+})
+
+/**
+* get all the list of issues assigned to me
+ */
+var GetAllIssuesAssignedToMe = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	createdBy := context.Get(r, "userID")
+	dbResult, err := DB.GetIssuesAssignedToMe(createdBy)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+
+	data := struct {
+		AllIssues []*DB.Issue `json:"all_issues"`
+	}{dbResult}
+
+	message = "All issue assigned to you successfully retrieved"
+	response := responseHandler.ResponseWriter(message, true, data, 200)
 	result, _ := json.Marshal(response)
 	w.Write([]byte(result))
 })

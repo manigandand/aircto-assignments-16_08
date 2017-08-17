@@ -32,13 +32,13 @@ func main() {
 	/**
 	* issue api
 	 */
-	str.Handle("/issues", authMiddleware.JwtMiddleware(issueController.GetAllIssuesList)).Methods("GET")             // get all the list of issues
-	str.Handle("/issue/{issueID:[0-9]+}", authMiddleware.JwtMiddleware(issueController.GetIssueInfo)).Methods("GET") // READ - get the single issue details
-	str.Handle("/issue", authMiddleware.JwtMiddleware(issueController.CreateIssue)).Methods("POST")
-	// str.Handle("/update-issue", authMiddleware.JwtMiddleware(aircto.UpdateIssue)).Methods("PUT")
-	// str.Handle("/delete-issue", authMiddleware.JwtMiddleware(aircto.DeleteIssue)).Methods("DELETE")
-	// str.Handle("/issues-by-me", authMiddleware.JwtMiddleware(aircto.GetAllIssuesByMe)).Methods("GET")
-	// str.Handle("/issues-for-me", authMiddleware.JwtMiddleware(aircto.GetAllIssuesAssignedToMe)).Methods("GET")
+	str.Handle("/issues", authMiddleware.JwtMiddleware(issueController.GetAllIssuesList)).Methods("GET")               // get all the list of issues
+	str.Handle("/issue/{issueID:[0-9]+}", authMiddleware.JwtMiddleware(issueController.GetIssueInfo)).Methods("GET")   // READ - get the single issue details
+	str.Handle("/issue", authMiddleware.JwtMiddleware(issueController.CreateIssue)).Methods("POST")                    // CREATE - create a issue
+	str.Handle("/issue/{issueID:[0-9]+}", authMiddleware.JwtMiddleware(issueController.UpdateIssue)).Methods("PUT")    // UPDATE - update a issue
+	str.Handle("/issue/{issueID:[0-9]+}", authMiddleware.JwtMiddleware(issueController.DeleteIssue)).Methods("DELETE") // DELETE - delete a issue
+	str.Handle("/issues-by-me", authMiddleware.JwtMiddleware(issueController.GetAllIssuesByMe)).Methods("GET")
+	str.Handle("/issues-for-me", authMiddleware.JwtMiddleware(issueController.GetAllIssuesAssignedToMe)).Methods("GET")
 
 	http.Handle("/", rtr)
 
