@@ -1,8 +1,10 @@
 package main
 
 import (
-	// authMiddleware "aricto/middleware"
-	userController "aricto/controller/user"
+	issueController "aircto/controller/issue"
+	userController "aircto/controller/user"
+
+	authMiddleware "aircto/middleware"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,19 +24,21 @@ func main() {
 	str.HandleFunc("/", userController.HandleIndex)
 	str.HandleFunc("/login", userController.PostLogin).Methods("POST")
 
-	//user subroute api
-	// usr_str := str.PathPrefix("/user").Subrouter()
-	// usr_str.HandleFunc("/all-user-list", aricto.GetAllUserList).Methods("GET")
+	/**
+	* user api
+	 */
+	str.HandleFunc("/users", userController.GetAllUserList).Methods("GET") // reterive all user details
 
-	//issue subroute api
-	// isu_str := str.PathPrefix("/issues").Subrouter()
-	// isu_str.Handle("/all-issues-list", authMiddleware.JwtMiddleware(aricto.GetAllIssuesList)).Methods("GET")
-	// isu_str.Handle("/issue-info", authMiddleware.JwtMiddleware(aricto.GetIssueInfo)).Methods("GET")
-	// isu_str.Handle("/create-issue", authMiddleware.JwtMiddleware(aricto.CreateIssue)).Methods("POST")
-	// isu_str.Handle("/update-issue", authMiddleware.JwtMiddleware(aricto.UpdateIssue)).Methods("PUT")
-	// isu_str.Handle("/delete-issue", authMiddleware.JwtMiddleware(aricto.DeleteIssue)).Methods("DELETE")
-	// isu_str.Handle("/issues-by-me", authMiddleware.JwtMiddleware(aricto.GetAllIssuesByMe)).Methods("GET")
-	// isu_str.Handle("/issues-for-me", authMiddleware.JwtMiddleware(aricto.GetAllIssuesAssignedToMe)).Methods("GET")
+	/**
+	* issue api
+	 */
+	str.Handle("/issues", authMiddleware.JwtMiddleware(issueController.GetAllIssuesList)).Methods("GET")             // get all the list of issues
+	str.Handle("/issue/{issueID:[0-9]+}", authMiddleware.JwtMiddleware(issueController.GetIssueInfo)).Methods("GET") // READ - get the single issue details
+	str.Handle("/issue", authMiddleware.JwtMiddleware(issueController.CreateIssue)).Methods("POST")
+	// str.Handle("/update-issue", authMiddleware.JwtMiddleware(aircto.UpdateIssue)).Methods("PUT")
+	// str.Handle("/delete-issue", authMiddleware.JwtMiddleware(aircto.DeleteIssue)).Methods("DELETE")
+	// str.Handle("/issues-by-me", authMiddleware.JwtMiddleware(aircto.GetAllIssuesByMe)).Methods("GET")
+	// str.Handle("/issues-for-me", authMiddleware.JwtMiddleware(aircto.GetAllIssuesAssignedToMe)).Methods("GET")
 
 	http.Handle("/", rtr)
 

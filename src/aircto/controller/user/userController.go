@@ -9,8 +9,8 @@ import (
 	"time"
 	// "strconv"
 
-	DB "aricto/model"
-	responseHandler "aricto/response"
+	DB "aircto/model"
+	responseHandler "aircto/response"
 
 	// "database/sql"
 	"github.com/dgrijalva/jwt-go"
@@ -44,29 +44,27 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 * Login handler
  */
 func PostLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
-		email := strings.TrimSpace(r.PostFormValue("email"))
-		password := strings.TrimSpace(r.PostFormValue("password"))
+	email := strings.TrimSpace(r.PostFormValue("email"))
+	password := strings.TrimSpace(r.PostFormValue("password"))
 
-		dbResult, err := DB.CheckLogin(email, password)
-		if err != nil {
-			result, _ := json.Marshal(responseHandler.LoadErrorResponse(401, err))
-			w.Write([]byte(result))
-		} else {
-			acstkn := getTokenHandler(dbResult)
-			data := struct {
-				AccessToken string  `json:"access_token"`
-				UserDetails DB.User `json:"user_details"`
-			}{acstkn, dbResult}
+	dbResult, err := DB.CheckLogin(email, password)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(401, err))
+		w.Write([]byte(result))
+	} else {
+		acstkn := getTokenHandler(dbResult)
+		data := struct {
+			AccessToken string  `json:"access_token"`
+			UserDetails DB.User `json:"user_details"`
+		}{acstkn, dbResult}
 
-			message = "You have successfully logged in."
-			response := responseHandler.ResponseWriter(message, true, data, 200)
-			result, _ := json.Marshal(response)
+		message = "You have successfully logged in."
+		response := responseHandler.ResponseWriter(message, true, data, 200)
+		result, _ := json.Marshal(response)
 
-			w.Write([]byte(result))
-		}
+		w.Write([]byte(result))
 	}
 }
 
@@ -91,4 +89,29 @@ func getTokenHandler(res DB.User) string {
 
 	/* Finally, write the token to the browser window */
 	return tokenString
+}
+
+/**
+ * [getAllUserList -reterive all user details ]
+ * @param {[type]} w http.ResponseWriter [description]
+ * @param {[type]} r *http.Request       [description]
+ */
+func GetAllUserList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	dbResult, err := DB.GetAllUsers()
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+	} else {
+		data := struct {
+			UserDetails []*DB.User `json:"user_details"`
+		}{dbResult}
+
+		message = "All user list successfully retrieved"
+		response := responseHandler.ResponseWriter(message, true, data, 200)
+		result, _ := json.Marshal(response)
+
+		w.Write([]byte(result))
+	}
 }

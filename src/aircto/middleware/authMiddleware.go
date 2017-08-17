@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	// sitDatatype "aricto/datatypes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
+	responseHandler "aircto/response"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
@@ -31,29 +32,25 @@ func JwtMiddleware(next http.Handler) http.Handler {
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			fmt.Println(claims["id"], claims["email"], claims["user_name"], claims["first_name"], claims["last_name"], claims["exp"])
 
-			context.Set(r, "user_id", claims["id"])
-			context.Set(r, "user_email", claims["email"])
-			context.Set(r, "user_name", claims["user_name"])
-			context.Set(r, "user_fName", claims["first_name"])
-			context.Set(r, "user_lName", claims["last_name"])
+			context.Set(r, "userID", claims["id"])
+			context.Set(r, "userEmail", claims["email"])
+			context.Set(r, "userName", claims["user_name"])
+			context.Set(r, "userFirstName", claims["first_name"])
+			context.Set(r, "userLastName", claims["last_name"])
 
 			next.ServeHTTP(w, r)
 		} else {
 			fmt.Println(err)
 			fmt.Println("Token is not valid:", token)
 
-			result, _ := json.Marshal(map[string]interface{}{
-				"forcePageRefresh": 0,
-				"message":          "Unauthorized: Token is not valid",
-				"status":           false,
-				"data":             "",
-				// "error" : &sitDatatype.ErrorType{
-				//     		Exists : true,
-				//     		Errors : err.Error(),
-				// 	    },
-				"statusCode": 401,
-				"time":       struct{ UnixTime int32 }{int32(time.Now().Unix())},
-			})
+			result, _ := json.Marshal(&responseHandler.Response{
+				false,
+				"Unauthorized: Token is not valid",
+				false,
+				"Oops!",
+				responseHandler.ErrorType{true, err.Error()},
+				401,
+				responseHandler.TimeType{int32(time.Now().Unix())}})
 
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(result))
