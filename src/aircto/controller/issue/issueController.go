@@ -128,7 +128,7 @@ var CreateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// return success response
-	issteDetailsRes, err := DB.GetIssue(lastIssueID)
+	issueDetailsRes, err := DB.GetIssue(lastIssueID)
 	if err != nil {
 		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
 		w.Write([]byte(result))
@@ -136,7 +136,7 @@ var CreateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	}
 	data := struct {
 		IssueDetails DB.Issue `json:"issue_details"`
-	}{issteDetailsRes}
+	}{issueDetailsRes}
 
 	message = dbResult
 
@@ -146,7 +146,7 @@ var CreateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 		Send Mail to the assignee about the new Issue, (goroutine)
 	*/
 	fmt.Println("initiated goroutine to send mail...")
-	go newIssueMailToUser(issteDetailsRes, assigneeDetails, "New Issue", "You are assigned to a new issue")
+	go newIssueMailToUser(issueDetailsRes, assigneeDetails, "New Issue", "You are assigned to a new issue")
 
 	w.Write([]byte(result))
 })
@@ -212,7 +212,7 @@ var UpdateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// return success response
-	issteDetailsRes, err := DB.GetIssue(resIssueID)
+	issueDetailsRes, err := DB.GetIssue(resIssueID)
 	if err != nil {
 		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
 		w.Write([]byte(result))
@@ -220,7 +220,7 @@ var UpdateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	}
 	data := struct {
 		IssueDetails DB.Issue `json:"issue_details"`
-	}{issteDetailsRes}
+	}{issueDetailsRes}
 
 	message = dbResult
 	response := responseHandler.ResponseWriter(message, true, data, 201)
@@ -230,7 +230,7 @@ var UpdateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	*/
 	if oldAssignee != issueReqBody.AssignedTo {
 		fmt.Println("initiated goroutine to send mail...")
-		go newIssueMailToUser(issteDetailsRes, assigneeDetails, "New Issue", "You are reassigned to a new issue")
+		go newIssueMailToUser(issueDetailsRes, assigneeDetails, "New Issue", "You are reassigned to a new issue")
 	}
 	w.Write([]byte(result))
 })
@@ -307,7 +307,7 @@ var GetAllIssuesAssignedToMe = http.HandlerFunc(func(w http.ResponseWriter, r *h
 	}
 
 	data := struct {
-		AllIssues []*DB.Issue `json:"all_issues"`
+		AllIssues []DB.Issue `json:"all_issues"`
 	}{dbResult}
 
 	message = "All issue assigned to you successfully retrieved"
@@ -319,30 +319,39 @@ var GetAllIssuesAssignedToMe = http.HandlerFunc(func(w http.ResponseWriter, r *h
 /**
 * Send mail: new ticket
  */
-func newIssueMailToUser(issteDetailsRes DB.Issue, assigneeDetails DB.User, title string, message string) {
+func newIssueMailToUser(issueRes DB.Issue, assigneeDetails DB.User, title string, message string) {
 	// send this mail after 12 minutes to the user
-	<-time.After(12 * time.Minute)
-	mail.PrepareToSendMail(issteDetailsRes, assigneeDetails, title, message)
+	// <-time.After(12 * time.Minute)
+	<-time.After(12 * time.Second)
+
+	issueDetailsRes := []DB.Issue{issueRes}
+	mail.PrepareToSendMail(issueDetailsRes, assigneeDetails, title, message)
 }
 
 /**
 * Send mail: Issue Report
  */
 func IssueInfoCronJob() {
+	fmt.Println("Goroutine report generator start...")
 	// get all the issues
-	dbResult, err := DB.GetAllUsers()
+	userRes, err := DB.GetAllUsers()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println(dbResult)
-	for i, v := range dbResult {
-		fmt.Println(v)
-		fmt.Printf("%d = %s\n", i, v.Email)
+	for i, v := range userRes {
+		// get all the issues assigned to this user
+		issueRes, err := DB.GetIssuesAssignedToMe(v.ID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("Sending report to the user ", i+1)
+		if len(issueRes) > 0 {
+			mail.PrepareToSendMail(issueRes, v, "Daily Issue Report", "Please find all the issue details assigned to you.")
+		}
 	}
-	// DB.GetAllIssueGroupBy()
-	// get the assignee id
-	// get the user details
-	// send mail
+	fmt.Println("Goroutine report generator end...")
+	return
 }

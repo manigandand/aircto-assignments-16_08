@@ -11,14 +11,32 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/jasonlvhit/gocron"
 )
+
+var cronJobInterval uint64
+
+func init() {
+	cronJobInterval = 24
+}
 
 /**
  * [Goriila mux router]
  * @return {[type]} [request response route handler]
  */
 func main() {
-	issueController.IssueInfoCronJob()
+	/**
+	* create a issue report schedular job to send email to the user with issue details assigned to him
+	 */
+	go func() {
+		/*
+		* Give Seconds | Minutes | Hours | Days
+		 */
+		gocron.Every(cronJobInterval).Hours().Do(issueController.IssueInfoCronJob)
+		_, time := gocron.NextRun()
+		fmt.Println("Next cron job run on: ", time)
+		<-gocron.Start()
+	}()
 
 	rtr := mux.NewRouter()
 

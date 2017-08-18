@@ -106,7 +106,7 @@ func GetAllUserList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := struct {
-		UserDetails []*DB.User `json:"user_details"`
+		UserDetails []DB.User `json:"user_details"`
 	}{dbResult}
 
 	message = "All user list successfully retrieved"

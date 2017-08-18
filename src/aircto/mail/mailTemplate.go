@@ -15,11 +15,15 @@ const Template = `
 				  	<p style="font-size: 15px;"> {{.Message}} <br>Issue Details:<br><br></p>
 				  	<div>
 			  			{{ range $key, $value := .Issue }}
-
-			  				<strong>{{ $key}}</strong>: {{ $value }} <br />
-
+			  				<strong>Issue No: {{ inc $key}}</strong> <br />
+			  				<strong>Issue ID: </strong>: {{ $value.ID }} <br />
+			  				<strong>Issue Title: </strong>: {{ $value.Title }} <br />
+			  				<strong>Issue Description: </strong>: {{ $value.Description }} <br />
+			  				<strong>Issue Created By: </strong>: {{ $value.CreatedBy }} <br />
+			  				<strong>Issue Status: </strong>: {{ $value.Status }} <br />
+			  				<span>---------------------------------------------------</span><br /> <br />
 						{{ end }}
-						<span>---------------------------------------------------</span><br /> <br />
+
 			    	</div>
 				</div>
 		</div>

@@ -129,8 +129,8 @@ func GetIssuesCreatedByMe(createdBy interface{}) ([]*Issue, error) {
 	return issuesRes, nil
 }
 
-func GetIssuesAssignedToMe(createdBy interface{}) ([]*Issue, error) {
-	var issuesRes []*Issue
+func GetIssuesAssignedToMe(createdBy interface{}) ([]Issue, error) {
+	var issuesRes []Issue
 
 	rows, err := db.Query("SELECT * FROM issues WHERE assigned_to=?", createdBy)
 	if err != nil {
@@ -139,7 +139,7 @@ func GetIssuesAssignedToMe(createdBy interface{}) ([]*Issue, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		res1 := &Issue{}
+		res1 := Issue{}
 		err = rows.Scan(&res1.ID, &res1.Title, &res1.Description, &res1.AssignedTo, &res1.CreatedBy, &res1.Status)
 		if err != nil {
 			return issuesRes, err
@@ -148,8 +148,4 @@ func GetIssuesAssignedToMe(createdBy interface{}) ([]*Issue, error) {
 		issuesRes = append(issuesRes, res1)
 	}
 	return issuesRes, nil
-}
-
-func GetAllIssueGroupBy() {
-
 }

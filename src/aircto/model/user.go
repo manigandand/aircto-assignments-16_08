@@ -24,8 +24,8 @@ func CheckLogin(email string, password string) (User, error) {
 	return res, nil
 }
 
-func GetAllUsers() ([]*User, error) {
-	var userRes []*User
+func GetAllUsers() ([]User, error) {
+	var userRes []User
 
 	rows, err := db.Query("SELECT * FROM user")
 	if err != nil {
@@ -34,7 +34,7 @@ func GetAllUsers() ([]*User, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		res1 := &User{}
+		res1 := User{}
 		err = rows.Scan(&res1.ID, &res1.Email, &res1.UserName, &res1.FirstName, &res1.LastName, &res1.Password, &res1.AccessToken)
 		if err != nil {
 			return userRes, err

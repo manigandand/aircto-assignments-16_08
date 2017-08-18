@@ -4,7 +4,7 @@ import (
 	DB "aircto/model"
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
 	"html/template"
 	"net/mail"
@@ -20,15 +20,16 @@ func encodeRFC2047(String string) string {
 	return strings.Trim(addr.String(), " <>")
 }
 
-func PrepareToSendMail(issteDetailsRes DB.Issue, assigneeDetails DB.User, title string, message string) {
+func PrepareToSendMail(issueDetailsRes []DB.Issue, assigneeDetails DB.User, title string, message string) {
 	fmt.Println("goroutine mail start...")
-
-	// convert issue struct data into json
-	arrIsu, _ := json.Marshal(issteDetailsRes)
-	jsonIssueDetails := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(string(arrIsu)), &jsonIssueDetails); err != nil {
-		panic(err)
-	}
+	/*
+		// convert issue struct data into json
+		arrIsu, _ := json.Marshal(issueDetailsRes)
+		jsonIssueDetails := make(map[string]interface{})
+		if err := json.Unmarshal([]byte(string(arrIsu)), &jsonIssueDetails); err != nil {
+			panic(err)
+		}
+	*/
 	// prepare mail connections
 	smtpServer := "smtp.gmail.com"
 	auth = smtp.PlainAuth(
@@ -42,7 +43,7 @@ func PrepareToSendMail(issteDetailsRes DB.Issue, assigneeDetails DB.User, title 
 	templateData := map[string]interface{}{
 		"Name":    assigneeDetails.FirstName + " " + assigneeDetails.LastName,
 		"Message": message,
-		"Issue":   jsonIssueDetails,
+		"Issue":   issueDetailsRes,
 	}
 
 	bodyTemplate, err := ParseTemplate(Template, templateData)
@@ -86,8 +87,8 @@ func ParseTemplate(templateFileName string, data interface{}) (string, error) {
 	// function map to increment $key value
 	funcMap := template.FuncMap{
 		// The name "inc" is what the function will be called in the template text.
-		"inc": func(i string) string {
-			return i
+		"inc": func(i int) int {
+			return i + 1
 		},
 	}
 
