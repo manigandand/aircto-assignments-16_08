@@ -321,8 +321,7 @@ var GetAllIssuesAssignedToMe = http.HandlerFunc(func(w http.ResponseWriter, r *h
  */
 func newIssueMailToUser(issueRes DB.Issue, assigneeDetails DB.User, title string, message string) {
 	// send this mail after 12 minutes to the user
-	// <-time.After(12 * time.Minute)
-	<-time.After(12 * time.Second)
+	<-time.After(12 * time.Minute)
 
 	issueDetailsRes := []DB.Issue{issueRes}
 	mail.PrepareToSendMail(issueDetailsRes, assigneeDetails, title, message)
