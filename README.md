@@ -48,9 +48,6 @@ Please reach me out for more clarification @ manigandan.jeff@gmail.com, 95786287
 
 
 
-
-
-
 # Simple-Issue-Tracker-V2-SIT-
 
 Design:
