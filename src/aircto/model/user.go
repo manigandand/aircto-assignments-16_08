@@ -45,6 +45,16 @@ func GetAllUsers() ([]*User, error) {
 	return userRes, nil
 }
 
+func GetUser(id int) (User, error) {
+	res := User{}
+	err = db.QueryRow("SELECT * FROM user WHERE id=?", id).Scan(&res.ID, &res.Email, &res.UserName, &res.FirstName, &res.LastName, &res.Password, &res.AccessToken)
+	if err != nil {
+		return res, errors.New("Wrong Assignee.. We don't have the assignee details you are trying to assign this issue.")
+	}
+
+	return res, nil
+}
+
 /*func (u *user) getUser(db *sql.DB) error {
 	return errors.New("Not Implemented")
 }

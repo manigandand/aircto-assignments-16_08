@@ -18,6 +18,8 @@ import (
  * @return {[type]} [request response route handler]
  */
 func main() {
+	issueController.IssueInfoCronJob()
+
 	rtr := mux.NewRouter()
 
 	str := rtr.PathPrefix("/api").Subrouter()

@@ -52,22 +52,43 @@ func GetIssue(issueID int) (Issue, error) {
 	return res1, nil
 }
 
-func CreateIssue(issueReqBody IssueValidator, createdBy interface{}) (string, error) {
-	_, err := db.Exec("INSERT INTO issues(title, description, assigned_to, created_by, status) VALUES(?, ?, ?, ?, ?)", issueReqBody.Title, issueReqBody.Description, issueReqBody.AssignedTo, createdBy, issueReqBody.Status)
+func checkErr(err error, retErr error) (string, int, error) {
 	if err != nil {
 		fmt.Println(err)
-		return "", errors.New("Server error, unable to create your issue.")
+		return "", 0, retErr
 	}
-	return "New Issue successfully created", nil
+	return "", 0, err
 }
 
-func GetUpdaetIssueId(issueID int, createdBy interface{}) (int, error) {
-	var id int
-	err := db.QueryRow("SELECT id FROM issues WHERE id=? AND created_by=?", issueID, createdBy).Scan(&id)
+func CreateIssue(issueReqBody IssueValidator, createdBy interface{}) (string, int, error) {
+	stmt, err := db.Prepare("INSERT INTO issues(title, description, assigned_to, created_by, status) VALUES(?, ?, ?, ?, ?)")
+	checkErr(err, errors.New("DB error, unable to preapare statement"))
+	res, err := stmt.Exec(issueReqBody.Title, issueReqBody.Description, issueReqBody.AssignedTo, createdBy, issueReqBody.Status)
+	checkErr(err, errors.New("DB error, unable to execute statement"))
+
+	id, err := res.LastInsertId()
+	checkErr(err, errors.New("DB error, unable to get the last inserted id"))
+	fmt.Println("last inserted id:", id)
+
+	return "New Issue successfully created", int(id), nil
+	// old
+	/*
+		_, err = db.Exec("INSERT INTO issues(title, description, assigned_to, created_by, status) VALUES(?, ?, ?, ?, ?)", issueReqBody.Title, issueReqBody.Description, issueReqBody.AssignedTo, createdBy, issueReqBody.Status)
+		if err != nil {
+			fmt.Println(err)
+			return "", errors.New("Server error, unable to create your issue.")
+		}
+		return "New Issue successfully created", nil
+	*/
+}
+
+func GetUpdaetIssueId(issueID int, createdBy interface{}) (int, int, error) {
+	var id, oldAssignee int
+	err := db.QueryRow("SELECT id,assigned_to FROM issues WHERE id=? AND created_by=?", issueID, createdBy).Scan(&id, &oldAssignee)
 	if err != nil {
-		return id, errors.New("Unauthorized: You don't have access to update/edit this issue information or the issue id is wrong.")
+		return oldAssignee, id, errors.New("Unauthorized: You don't have access to update/edit this issue information or the issue id is wrong.")
 	}
-	return id, nil
+	return oldAssignee, id, nil
 }
 
 func UpdateIssue(issueReqBody IssueValidator, issueID int, createdBy interface{}) (string, error) {
@@ -127,4 +148,8 @@ func GetIssuesAssignedToMe(createdBy interface{}) ([]*Issue, error) {
 		issuesRes = append(issuesRes, res1)
 	}
 	return issuesRes, nil
+}
+
+func GetAllIssueGroupBy() {
+
 }

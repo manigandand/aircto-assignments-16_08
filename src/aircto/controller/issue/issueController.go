@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"aircto/mail"
 	DB "aircto/model"
 	responseHandler "aircto/response"
 
@@ -108,18 +110,44 @@ var CreateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(result))
 		return
 	}
+	/*
+	 check if the assignee id vaild one
+	*/
+	assigneeDetails, err := DB.GetUser(issueReqBody.AssignedTo)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+
 	// we can goahead to save this info
-	dbResult, err := DB.CreateIssue(issueReqBody, createdBy)
+	dbResult, lastIssueID, err := DB.CreateIssue(issueReqBody, createdBy)
 	if err != nil {
 		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
 		w.Write([]byte(result))
 		return
 	}
 	// return success response
-	data := dbResult
+	issteDetailsRes, err := DB.GetIssue(lastIssueID)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+	data := struct {
+		IssueDetails DB.Issue `json:"issue_details"`
+	}{issteDetailsRes}
+
 	message = dbResult
+
 	response := responseHandler.ResponseWriter(message, true, data, 201)
 	result, _ := json.Marshal(response)
+	/*
+		Send Mail to the assignee about the new Issue, (goroutine)
+	*/
+	fmt.Println("initiated goroutine to send mail...")
+	go newIssueMailToUser(issteDetailsRes, assigneeDetails, "New Issue", "You are assigned to a new issue")
+
 	w.Write([]byte(result))
 })
 
@@ -157,8 +185,18 @@ var UpdateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(result))
 		return
 	}
+	/*
+	 check if the assignee id vaild one
+	*/
+	assigneeDetails, err := DB.GetUser(issueReqBody.AssignedTo)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+
 	// we can goahead to update this info, get issue info by id & createdBy
-	resIssueID, err := DB.GetUpdaetIssueId(issueID, createdBy)
+	oldAssignee, resIssueID, err := DB.GetUpdaetIssueId(issueID, createdBy)
 	if err != nil {
 		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
 		w.Write([]byte(result))
@@ -172,11 +210,28 @@ var UpdateIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(result))
 		return
 	}
+
 	// return success response
-	data := dbResult
+	issteDetailsRes, err := DB.GetIssue(resIssueID)
+	if err != nil {
+		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, err))
+		w.Write([]byte(result))
+		return
+	}
+	data := struct {
+		IssueDetails DB.Issue `json:"issue_details"`
+	}{issteDetailsRes}
+
 	message = dbResult
 	response := responseHandler.ResponseWriter(message, true, data, 201)
 	result, _ := json.Marshal(response)
+	/*
+		IF new assignee Send Mail to the assignee about the new Issue, (goroutine)
+	*/
+	if oldAssignee != issueReqBody.AssignedTo {
+		fmt.Println("initiated goroutine to send mail...")
+		go newIssueMailToUser(issteDetailsRes, assigneeDetails, "New Issue", "You are reassigned to a new issue")
+	}
 	w.Write([]byte(result))
 })
 
@@ -190,7 +245,7 @@ var DeleteIssue = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 	createdBy := context.Get(r, "userID")
 
 	// we can goahead to update this info, get issue info by id & createdBy
-	resIssueID, err := DB.GetUpdaetIssueId(issueID, createdBy)
+	_, resIssueID, err := DB.GetUpdaetIssueId(issueID, createdBy)
 	if err != nil {
 		result, _ := json.Marshal(responseHandler.LoadErrorResponse(500, errors.New("You don't have access to delete this issue or the issue id is wrong.")))
 		w.Write([]byte(result))
@@ -260,3 +315,34 @@ var GetAllIssuesAssignedToMe = http.HandlerFunc(func(w http.ResponseWriter, r *h
 	result, _ := json.Marshal(response)
 	w.Write([]byte(result))
 })
+
+/**
+* Send mail: new ticket
+ */
+func newIssueMailToUser(issteDetailsRes DB.Issue, assigneeDetails DB.User, title string, message string) {
+	// send this mail after 12 minutes to the user
+	<-time.After(12 * time.Minute)
+	mail.PrepareToSendMail(issteDetailsRes, assigneeDetails, title, message)
+}
+
+/**
+* Send mail: Issue Report
+ */
+func IssueInfoCronJob() {
+	// get all the issues
+	dbResult, err := DB.GetAllUsers()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(dbResult)
+	for i, v := range dbResult {
+		fmt.Println(v)
+		fmt.Printf("%d = %s\n", i, v.Email)
+	}
+	// DB.GetAllIssueGroupBy()
+	// get the assignee id
+	// get the user details
+	// send mail
+}
